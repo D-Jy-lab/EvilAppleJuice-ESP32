@@ -7,10 +7,12 @@
 #include <BLEUtils.h>
 #include <BLEServer.h>
 
+#include <esp_gap_ble_api.h>
+
 #include "devices.hpp"
 
 BLEAdvertising *pAdvertising;  // global variable
-uint32_t delaySeconds = 1;
+uint32_t delaySeconds = 4;
 
 void setup() {
   Serial.begin(115200);
@@ -30,6 +32,8 @@ void setup() {
   // seems we need to init it with an address in setup() step.
   esp_bd_addr_t null_addr = {0xFE, 0xED, 0xC0, 0xFF, 0xEE, 0x69};
   pAdvertising->setDeviceAddress(null_addr, BLE_ADDR_TYPE_RANDOM);
+
+  esp_ble_tx_power_set(ESP_BLE_PWR_TYPE_ADV, ESP_PWR_LVL_P21);
 }
 
 void loop() {
@@ -109,6 +113,24 @@ void loop() {
   // Turn lights off while "sleeping"
   digitalWrite(12, LOW);
   digitalWrite(13, LOW);
-  delay(delaySeconds * 1000); // delay for delaySeconds seconds
+  delay(delaySeconds * 100); // delay for delaySeconds seconds
   pAdvertising->stop();
+
+  // 随机设置发射功率，权重由最大功率开始依次递减
+  int rand_val = random(100);  // 生成一个0到99的随机数
+  if (rand_val < 70) {  // 70% 的概率
+      esp_ble_tx_power_set(ESP_BLE_PWR_TYPE_ADV, ESP_PWR_LVL_P21);
+  } else if (rand_val < 80) {  // 10% 的概率
+      esp_ble_tx_power_set(ESP_BLE_PWR_TYPE_ADV, ESP_PWR_LVL_P18);
+  } else if (rand_val < 90) {  // 10% 的概率
+      esp_ble_tx_power_set(ESP_BLE_PWR_TYPE_ADV, ESP_PWR_LVL_P15);
+  } else if (rand_val < 95) {  // 5% 的概率
+      esp_ble_tx_power_set(ESP_BLE_PWR_TYPE_ADV, ESP_PWR_LVL_P12);
+  } else if (rand_val < 98) {  // 3% 的概率
+      esp_ble_tx_power_set(ESP_BLE_PWR_TYPE_ADV, ESP_PWR_LVL_P9);
+  } else if (rand_val < 99) {  // 1% 的概率
+      esp_ble_tx_power_set(ESP_BLE_PWR_TYPE_ADV, ESP_PWR_LVL_P6);
+  } else {  // 1% 的概率
+      esp_ble_tx_power_set(ESP_BLE_PWR_TYPE_ADV, ESP_PWR_LVL_N0);
+  }
 }
